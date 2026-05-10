@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import ProductList from './ProductList';
-import StockDashboard from './StockDashboard';
+import ProductList from './components/ProductList';
+import StockDashboard from './components/StockDashboard';
 
 function App() {
   const [activePage, setActivePage] = useState('catalogo');
