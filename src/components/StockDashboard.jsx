@@ -14,8 +14,8 @@ const StockDashboard = () => {
   const fetchStocks = async () => {
     const { data, error } = await supabase
       .from('stock')
-      .select('*')
-      .order('produto', { ascending: true });
+      .select('*, products(name), sizes(name)')
+      .order('created_at', { ascending: true });
 
     if (error) {
       console.error(error);
@@ -28,7 +28,7 @@ const StockDashboard = () => {
 
   useEffect(() => {
     const filtered = stocks.filter((stock) =>
-      stock.produto.toLowerCase().includes(filter.toLowerCase())
+      stock.products?.name.toLowerCase().includes(filter.toLowerCase())
     );
     setFilteredStocks(filtered);
   }, [filter, stocks]);
@@ -36,7 +36,7 @@ const StockDashboard = () => {
   const updateQuantity = async (id, newQty) => {
     const { error } = await supabase
       .from('stock')
-      .update({ quantidade: newQty })
+      .update({ quantity: newQty })
       .eq('id', id);
 
     if (error) {
@@ -49,14 +49,14 @@ const StockDashboard = () => {
   const increment = (id) => {
     const stock = stocks.find((s) => s.id === id);
     if (stock) {
-      updateQuantity(id, stock.quantidade + 1);
+      updateQuantity(id, stock.quantity + 1);
     }
   };
 
   const decrement = (id) => {
     const stock = stocks.find((s) => s.id === id);
-    if (stock && stock.quantidade > 0) {
-      updateQuantity(id, stock.quantidade - 1);
+    if (stock && stock.quantity > 0) {
+      updateQuantity(id, stock.quantity - 1);
     }
   };
 
@@ -64,7 +64,7 @@ const StockDashboard = () => {
     const stock = stocks.find((s) => s.id === id);
     if (!stock) return;
 
-    const newQty = prompt(`Nova quantidade para ${stock.produto} - ${stock.tamanho}:`, stock.quantidade);
+    const newQty = prompt(`Nova quantidade para ${stock.products?.name} - ${stock.sizes?.name}:`, stock.quantity);
     if (newQty !== null && !isNaN(newQty) && parseInt(newQty) >= 0) {
       updateQuantity(id, parseInt(newQty));
     }
@@ -121,25 +121,25 @@ const StockDashboard = () => {
               <tr
                 key={stock.id}
                 className={`hover:bg-gray-50 ${
-                  stock.quantidade < 5
+                  stock.quantity < 5
                     ? 'bg-red-50 border-l-4 border-red-400'
                     : ''
                 }`}
               >
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {stock.produto}
+                  {stock.products?.name}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {stock.tamanho}
+                  {stock.sizes?.name}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                  {stock.quantidade}
+                  {stock.quantity}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button
                     onClick={() => decrement(stock.id)}
                     className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-xs font-medium mr-2 transition-colors"
-                    disabled={stock.quantidade <= 0}
+                    disabled={stock.quantity <= 0}
                   >
                     -
                   </button>
