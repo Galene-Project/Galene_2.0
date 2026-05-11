@@ -1,4 +1,3 @@
-import '../styles/GaleneStore.css';
 import React, { useState, useCallback } from "react";
 import Sidebar from "./Sidebar";
 import ModalProd from "./ModalProd";
@@ -6,27 +5,23 @@ import Carrinho from "./Carrinho";
 import { CardDest, Card } from "./Cards";
 import { T, PRODUTOS } from "../lib/data";
 import { useWindowWidth } from "../hooks/useWindowWidth";
+import AdminAccessSimplified from './AdminAccessSimplified';
 
 export default function GaleneStore() {
   const w = useWindowWidth();
   const mob = w < 900;
-
-  // BUG CORRIGIDO: renomeado de 'view' para 'currentView' para evitar
-  // conflito com a função view() que alguns bundlers injetam no escopo.
-  const [cat, setCat]               = useState("destaques");
-  const [modal, setModal]           = useState(null);
-  const [cart, setCart]             = useState([]);
+  const [cat, setCat] = useState("destaques");
+  const [modal, setModal] = useState(null);
+  const [cart, setCart] = useState([]);
   const [currentView, setCurrentView] = useState("loja");
-  const [drawer, setDrawer]         = useState(false);
-  const [toast, setToast]           = useState(null);
-
+  const [drawer, setDrawer] = useState(false);
+  const [toast, setToast] = useState(null);
+  
   const totPcs = cart.reduce((s, i) => s + i.sel.reduce((a, x) => a + x.qtd, 0), 0);
-
   const prods = cat === "destaques"
     ? PRODUTOS.filter((p) => p.destaque)
     : PRODUTOS.filter((p) => p.cat === cat);
-
-  // BUG CORRIGIDO: spread operators com caracteres ASCII corretos
+  
   const addToCart = useCallback((prod, sel) => {
     setCart((prev) => {
       const idx = prev.findIndex((i) => i.id === prod.id);
@@ -47,25 +42,22 @@ export default function GaleneStore() {
     setToast(`${n} peça${n > 1 ? "s" : ""} de "${prod.nome}" adicionada${n > 1 ? "s" : ""}!`);
     setTimeout(() => setToast(null), 3500);
   }, []);
-
+  
   const handleFinish = useCallback(() => {
     setCart([]);
     setCurrentView("loja");
     setCat("destaques");
   }, []);
-
+  
   return (
     <div style={{ fontFamily: "'Lato',sans-serif", background: T.bg, minHeight: "100vh", color: T.ink }}>
-
-      {/* ── Toast ──────────────────────────────────────────────────────── */}
       {toast && (
         <div className="toast" style={{ position: "fixed", top: 20, right: 20, zIndex: 9999, background: T.panel, border: `1px solid ${T.border}`, borderRadius: 10, padding: "12px 18px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 4px 20px rgba(26,23,20,0.15)", fontFamily: "'Lato',sans-serif", fontSize: 12, color: T.ink2, maxWidth: 320 }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ color: T.jade, flexShrink: 0 }}><polyline points="20 6 9 17 4 12"/></svg>
           {toast}
         </div>
       )}
-
-      {/* ── Drawer mobile ──────────────────────────────────────────────── */}
+      
       {mob && drawer && (
         <div style={{ position: "fixed", inset: 0, zIndex: 600 }}>
           <div onClick={() => setDrawer(false)} style={{ position: "absolute", inset: 0, background: "rgba(26,23,20,0.4)" }} />
@@ -74,8 +66,7 @@ export default function GaleneStore() {
           </div>
         </div>
       )}
-
-      {/* ── HEADER ─────────────────────────────────────────────────────── */}
+      
       <header style={{ position: "sticky", top: 0, zIndex: 400, background: T.panel, borderBottom: `1px solid ${T.border}`, boxShadow: "0 2px 12px rgba(26,23,20,0.06)" }}>
         <div style={{ background: `linear-gradient(135deg,${T.goldDk},${T.gold},${T.goldDk})`, padding: "7px 16px", textAlign: "center", fontFamily: "'Lato',sans-serif", fontSize: 10, letterSpacing: 2.5, color: "white", fontWeight: 700 }}>
           ✦ ATACADO ✦ PIX E CARTÃO ✦ PEDIDO MÍNIMO 6 PEÇAS ✦
@@ -88,8 +79,7 @@ export default function GaleneStore() {
               ))}
             </button>
           )}
-
-          {/* Logo */}
+          
           <div onClick={() => { setCurrentView("loja"); setCat("destaques"); }} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}>
             <svg width={mob ? 30 : 38} height={mob ? 30 : 38} viewBox="0 0 80 80" fill="none">
               <polygon points="40,4 74,22 74,58 40,76 6,58 6,22" stroke={T.gold} strokeWidth="2" fill="none" />
@@ -105,8 +95,7 @@ export default function GaleneStore() {
               {!mob && <div style={{ fontFamily: "'Lato',sans-serif", fontSize: 8.5, letterSpacing: 3, color: T.ink4, textTransform: "uppercase" }}>Moda Feminina Atacado</div>}
             </div>
           </div>
-
-          {/* Nav direita */}
+          
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {!mob && (
               <button
@@ -135,8 +124,7 @@ export default function GaleneStore() {
           </div>
         </div>
       </header>
-
-      {/* ── BODY ───────────────────────────────────────────────────────── */}
+      
       {currentView === "carrinho" ? (
         <Carrinho
           cart={cart}
@@ -146,17 +134,13 @@ export default function GaleneStore() {
         />
       ) : (
         <div style={{ display: "flex", minHeight: "calc(100vh - 112px)" }}>
-          {/* Sidebar desktop */}
           {!mob && (
             <div style={{ position: "sticky", top: 112, height: "calc(100vh - 112px)", overflowY: "auto", flexShrink: 0 }}>
               <Sidebar cat={cat} setCat={setCat} mobile={false} />
             </div>
           )}
-
-          {/* Main */}
+          
           <main style={{ flex: 1, padding: mob ? "14px 12px 100px" : "28px 32px 60px", minWidth: 0 }}>
-
-            {/* Hero banner — Destaques */}
             {cat === "destaques" && (
               <div style={{ background: `linear-gradient(135deg,${T.bg2},${T.bg3})`, borderRadius: 16, padding: mob ? "24px 20px" : "28px 36px", marginBottom: 28, position: "relative", overflow: "hidden", borderTop: `3px solid ${T.gold}` }}>
                 <div style={{ position: "absolute", right: mob ? 16 : 40, top: "50%", transform: "translateY(-50%)", opacity: 0.08, fontSize: mob ? 80 : 120, fontFamily: "'Cormorant Garamond',serif", fontWeight: 700, color: T.goldDk, userSelect: "none", lineHeight: 1 }}>G</div>
@@ -171,8 +155,7 @@ export default function GaleneStore() {
                 </div>
               </div>
             )}
-
-            {/* Título categoria */}
+            
             {cat !== "destaques" && (
               <div style={{ marginBottom: 22, paddingBottom: 16, borderBottom: `1px solid ${T.border}` }}>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
@@ -185,8 +168,7 @@ export default function GaleneStore() {
                 </div>
               </div>
             )}
-
-            {/* Grid destaques */}
+            
             {cat === "destaques" && (
               <div className="fade" style={{ display: "grid", gridTemplateColumns: mob ? "1fr 1fr" : "repeat(auto-fill, minmax(260px, 1fr))", gap: mob ? 16 : 24 }}>
                 {prods.map((p) => (
@@ -194,8 +176,7 @@ export default function GaleneStore() {
                 ))}
               </div>
             )}
-
-            {/* Grid normal */}
+            
             {cat !== "destaques" && (
               <div className="fade" style={{ display: "grid", gridTemplateColumns: mob ? "1fr 1fr" : "repeat(auto-fill, minmax(200px, 1fr))", gap: mob ? 12 : 16 }}>
                 {prods.map((p) => (
@@ -206,17 +187,15 @@ export default function GaleneStore() {
           </main>
         </div>
       )}
-
-      {/* Modal */}
+      
       {modal && <ModalProd prod={modal} onClose={() => setModal(null)} onAdd={addToCart} />}
-
-      {/* Nav mobile bottom */}
+      
       {mob && currentView !== "carrinho" && (
         <nav style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: T.panel, borderTop: `1px solid ${T.border}`, display: "flex", padding: "8px 0 12px", zIndex: 300, boxShadow: "0 -4px 16px rgba(26,23,20,0.08)" }}>
           {[
-            ["menu",     "☰", "Menu",     () => setDrawer(true)],
-            ["loja",     "◈", "Catálogo", () => { setCurrentView("loja"); setCat("destaques"); }],
-            ["carrinho", "◻", "Pedido",   () => setCurrentView("carrinho")],
+            ["menu", "☰", "Menu", () => setDrawer(true)],
+            ["loja", "◈", "Catálogo", () => { setCurrentView("loja"); setCat("destaques"); }],
+            ["carrinho", "◻", "Pedido", () => setCurrentView("carrinho")],
           ].map(([v, icon, label, action]) => (
             <button key={v} onClick={action} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "4px 0", position: "relative" }}>
               <span style={{ fontSize: 20 }}>{icon}</span>
@@ -231,6 +210,10 @@ export default function GaleneStore() {
           ))}
         </nav>
       )}
+      
+      <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 500 }}>
+        <AdminAccessSimplified />
+      </div>
     </div>
   );
 }
