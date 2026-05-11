@@ -1,166 +1,57 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import React, { useState } from 'react';
 
 const StockDashboard = () => {
-  const [stocks, setStocks] = useState([]);
-  const [filteredStocks, setFilteredStocks] = useState([]);
-  const [filter, setFilter] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [stocks, setStocks] = useState([
+    { id: 1, name: 'AAPL', quantity: 10, price: 150 },
+    { id: 2, name: 'GOOGL', quantity: 5, price: 2800 },
+    { id: 3, name: 'MSFT', quantity: 8, price: 300 }
+  ]);
 
-  useEffect(() => {
-    fetchStocks();
-  }, []);
-
-  const fetchStocks = async () => {
-    const { data, error } = await supabase
-      .from('stock')
-      .select('*, products(name), sizes(name)')
-      .order('created_at', { ascending: true });
-
-    if (error) {
-      console.error(error);
-    } else {
-      setStocks(data || []);
-      setFilteredStocks(data || []);
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    const filtered = stocks.filter((stock) =>
-      stock.products?.name.toLowerCase().includes(filter.toLowerCase())
-    );
-    setFilteredStocks(filtered);
-  }, [filter, stocks]);
-
-  const updateQuantity = async (id, newQty) => {
-    const { error } = await supabase
-      .from('stock')
-      .update({ quantity: newQty })
-      .eq('id', id);
-
-    if (error) {
-      console.error(error);
-    } else {
-      fetchStocks();
+  const editQuantity = (index) => {
+    const item = stocks[index];
+    const newQuantity = prompt(`Digite a nova quantidade para ${item.name}:`, item.quantity.toString());
+    if (newQuantity !== null && newQuantity !== '') {
+      const parsedQuantity = parseInt(newQuantity);
+      if (!isNaN(parsedQuantity) && parsedQuantity >= 0) {
+        setStocks(prevStocks => {
+          const newStocks = [...prevStocks];
+          newStocks[index].quantity = parsedQuantity;
+          return newStocks;
+        });
+      }
     }
   };
 
-  const increment = (id) => {
-    const stock = stocks.find((s) => s.id === id);
-    if (stock) {
-      updateQuantity(id, stock.quantity + 1);
-    }
-  };
-
-  const decrement = (id) => {
-    const stock = stocks.find((s) => s.id === id);
-    if (stock && stock.quantity > 0) {
-      updateQuantity(id, stock.quantity - 1);
-    }
-  };
-
-  const editQuantity = (id) => {
-    const stock = stocks.find((s) => s.id === id);
-    if (!stock) return;
-
-    const newQty = prompt(`Nova quantidade para ${stock.products?.name} - ${stock.sizes?.name}:`, stock.quantity);
-    if (newQty !== null && !isNaN(newQty) && parseInt(newQty) >= 0) {
-      updateQuantity(id, parseInt(newQty));
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center p-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
+  const totalValue = stocks.reduce((sum, stock) => sum + (stock.quantity * stock.price), 0);
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
-      <div className="mb-8">
-        <input
-          type="text"
-          placeholder="Filtrar por produto..."
-          className="w-full max-w-md p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-        />
-      </div>
-
-      {filteredStocks.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-gray-500 text-lg">
-            Nenhum estoque encontrado{filter && ` para "${filter}"`}.
-          </p>
-        </div>
-      )}
-
-      <div className="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg bg-white">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Produto
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Tamanho
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Quantidade
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Ações
-              </th>
+    <div className="stock-dashboard">
+      <h1>Dashboard de Ações</h1>
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Quantidade</th>
+            <th>Preço</th>
+            <th>Total</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {stocks.map((stock, index) => (
+            <tr key={stock.id}>
+              <td>{stock.name}</td>
+              <td>{stock.quantity}</td>
+              <td>R$ {stock.price.toFixed(2)}</td>
+              <td>R$ {(stock.quantity * stock.price).toFixed(2)}</td>
+              <td>
+                <button onClick={() => editQuantity(index)}>Editar Quantidade</button>
+              </td>
             </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {filteredStocks.map((stock) => (
-              <tr
-                key={stock.id}
-                className={`hover:bg-gray-50 ${
-                  stock.quantity < 5
-                    ? 'bg-red-50 border-l-4 border-red-400'
-                    : ''
-                }`}
-              >
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {stock.products?.name}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {stock.sizes?.name}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                  {stock.quantity}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button
-                    onClick={() => decrement(stock.id)}
-                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-xs font-medium mr-2 transition-colors"
-                    disabled={stock.quantity <= 0}
-                  >
-                    -
-                  </button>
-                  <button
-                    onClick={() => increment(stock.id)}
-                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs font-medium mr-2 transition-colors"
-                  >
-                    +
-                  </button>
-                  <button
-                    onClick={() => editQuantity(stock.id)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-xs font-medium transition-colors"
-                  >
-                    Editar
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          ))}
+        </tbody>
+      </table>
+      <h2>Valor Total do Portfólio: R$ {totalValue.toFixed(2)}</h2>
     </div>
   );
 };
