@@ -4,32 +4,32 @@ import AdminProducts from './AdminProducts';
 import AdminReports from './AdminReports';
 
 const AdminDashboard = () => {
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [summary, setSummary] = useState({ users: 0, products: 0, orders: 0, revenue: 0 });
-  const [activeTab, setActiveTab] = useState('products');
 
   useEffect(() => {
-    fetchSummary();
+    fetchProducts();
   }, []);
 
-  const fetchSummary = async () => {
-    try {
-      const [{ count: users }, { count: products }, { count: orders }, { data: orderData }] = await Promise.all([
-        supabase.from('profiles').select('*', { count: 'exact', head: true }),
-        supabase.from('products').select('*', { count: 'exact', head: true }),
-        supabase.from('orders').select('*', { count: 'exact', head: true }),
-        supabase.from('orders').select('total')
-      ]);
+  const fetchProducts = async () => {
+    const { data, error } = await supabase
+      .from('products')
+      .select('id, sku, name, category, material, price, price_original, discount_percentage, is_active');
 
-      const revenue = orderData?.reduce((sum, order) => sum + (order.total || 0), 0) || 0;
-
-      setSummary({ users: users || 0, products: products || 0, orders: orders || 0, revenue });
-    } catch (error) {
-      console.error('Erro ao buscar resumo:', error);
-    } finally {
-      setLoading(false);
+    if (error) {
+      console.error(error);
+    } else {
+      setProducts(data || []);
     }
+    setLoading(false);
   };
+
+  const totalProducts = products.length;
+  const activeProducts = products.filter(p => p.is_active).length;
+  const simulatedStockPerProduct = 10;
+  const totalStock = totalProducts * simulatedStockPerProduct;
+  const totalValue = products.reduce((sum, p) => sum + (p.price * simulatedStockPerProduct), 0);
 
   if (loading) {
     return (
@@ -40,56 +40,81 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold mb-8 text-gray-900">Painel Administrativo</h1>
+    <div className="min-h-screen bg-gray-50 p-6 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">Admin Dashboard</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Total Usuários</h3>
-          <p className="text-3xl font-bold text-indigo-600">{summary.users}</p>
+        <div className="border-b border-gray-200 mb-8">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => setActiveTab('dashboard')}
+              className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'dashboard'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Dashboard
+            </button>
+            <button
+              onClick={() => setActiveTab('produtos')}
+              className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'produtos'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Produtos
+            </button>
+            <button
+              onClick={() => setActiveTab('relatorios')}
+              className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'relatorios'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Relatórios
+            </button>
+          </nav>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Total Produtos</h3>
-          <p className="text-3xl font-bold text-green-600">{summary.products}</p>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Total Pedidos</h3>
-          <p className="text-3xl font-bold text-blue-600">{summary.orders}</p>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Receita Total</h3>
-          <p className="text-3xl font-bold text-purple-600">R$ {summary.revenue.toLocaleString('pt-BR')}</p>
-        </div>
-      </div>
 
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
-          <button
-            onClick={() => setActiveTab('products')}
-            className={`${
-              activeTab === 'products'
-                ? 'border-indigo-500 text-indigo-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm`}
-          >
-            Produtos
-          </button>
-          <button
-            onClick={() => setActiveTab('reports')}
-            className={`${
-              activeTab === 'reports'
-                ? 'border-indigo-500 text-indigo-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm`}
-          >
-            Relatórios
-          </button>
-        </nav>
-      </div>
+        {activeTab === 'dashboard' && (
+          <div>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-12">
+              <div className="bg-white overflow-hidden shadow rounded-lg border border-gray-200">
+                <div className="p-6">
+                  <dt className="text-sm font-medium text-gray-500 truncate">Total de Produtos</dt>
+                  <dd className="mt-1 text-3xl font-semibold text-gray-900">{totalProducts}</dd>
+                </div>
+              </div>
+              <div className="bg-white overflow-hidden shadow rounded-lg border border-gray-200">
+                <div className="p-6">
+                  <dt className="text-sm font-medium text-gray-500 truncate">Estoque Total</dt>
+                  <dd className="mt-1 text-3xl font-semibold text-green-600">{totalStock}</dd>
+                </div>
+              </div>
+              <div className="bg-white overflow-hidden shadow rounded-lg border border-gray-200">
+                <div className="p-6">
+                  <dt className="text-sm font-medium text-gray-500 truncate">Valor Total</dt>
+                  <dd className="mt-1 text-3xl font-semibold text-indigo-600">
+                    R$ {totalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </dd>
+                </div>
+              </div>
+              <div className="bg-white overflow-hidden shadow rounded-lg border border-gray-200">
+                <div className="p-6">
+                  <dt className="text-sm font-medium text-gray-500 truncate">Produtos Ativos</dt>
+                  <dd className="mt-1 text-3xl font-semibold text-blue-600">{activeProducts}</dd>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
-      <div className="mt-6">
-        {activeTab === 'products' && <AdminProducts />}
-        {activeTab === 'reports' && <AdminReports />}
+        {activeTab === 'produtos' && <AdminProducts products={products} />}
+
+        {activeTab === 'relatorios' && <AdminReports />}
       </div>
     </div>
   );
