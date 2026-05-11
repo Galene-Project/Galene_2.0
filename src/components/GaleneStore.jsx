@@ -6,7 +6,7 @@ import Carrinho from "./Carrinho";
 import { CardDest, Card } from "./Cards";
 import { T, PRODUTOS } from "../lib/data";
 import { useWindowWidth } from "../hooks/useWindowWidth";
-import AdminAccessSimplified from './AdminAccessSimplified';
+
 
 export default function GaleneStore() {
   const w = useWindowWidth();
