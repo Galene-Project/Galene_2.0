@@ -1,126 +1,95 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabaseClient';
+import { supabase } from '../lib/supabase';
 import AdminProducts from './AdminProducts';
 import AdminReports from './AdminReports';
 
 const AdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [stats, setStats] = useState({
-    totalProducts: 0,
-    totalStock: 0,
-    totalValue: 0,
-    lowStock: 0
-  });
   const [loading, setLoading] = useState(true);
+  const [summary, setSummary] = useState({ users: 0, products: 0, orders: 0, revenue: 0 });
+  const [activeTab, setActiveTab] = useState('products');
 
   useEffect(() => {
-    fetchStats();
+    fetchSummary();
   }, []);
 
-  const fetchStats = async () => {
-    const { data, error } = await supabase.from('products').select('*');
-    if (error) {
-      console.error(error);
-      setLoading(false);
-      return;
-    }
-    const totalProducts = data?.length || 0;
-    const totalStock = data?.reduce((sum, p) => sum + (p.stock || 0), 0) || 0;
-    const totalValue = data?.reduce((sum, p) => sum + ((p.stock || 0) * (p.price || 0)), 0) || 0;
-    const lowStock = data?.filter(p => (p.stock || 0) < 10).length || 0;
-    setStats({ totalProducts, totalStock, totalValue, lowStock });
-    setLoading(false);
-  };
+  const fetchSummary = async () => {
+    try {
+      const [{ count: users }, { count: products }, { count: orders }, { data: orderData }] = await Promise.all([
+        supabase.from('profiles').select('*', { count: 'exact', head: true }),
+        supabase.from('products').select('*', { count: 'exact', head: true }),
+        supabase.from('orders').select('*', { count: 'exact', head: true }),
+        supabase.from('orders').select('total')
+      ]);
 
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'dashboard':
-        return (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-6">
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">Total de Produtos</h3>
-              <p className="mt-1 text-3xl font-semibold text-gray-900">{stats.totalProducts.toLocaleString()}</p>
-              <button
-                className="mt-6 bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700"
-                onClick={() => setActiveTab('produtos')}
-              >
-                Ver todos
-              </button>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">Estoque Total</h3>
-              <p className="mt-1 text-3xl font-semibold text-gray-900">{stats.totalStock.toLocaleString()}</p>
-              <button
-                className="mt-6 bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700"
-                onClick={() => setActiveTab('produtos')}
-              >
-                Ver detalhes
-              </button>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">Valor Total</h3>
-              <p className="mt-1 text-3xl font-semibold text-gray-900">R$ {stats.totalValue.toLocaleString('pt-BR')}</p>
-              <button
-                className="mt-6 bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700"
-                onClick={() => setActiveTab('relatorios')}
-              >
-                Ver relatórios
-              </button>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">Produtos com Estoque Baixo</h3>
-              <p className="mt-1 text-3xl font-semibold text-red-600">{stats.lowStock}</p>
-              <button
-                className="mt-6 bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-700"
-                onClick={() => setActiveTab('produtos')}
-              >
-                Gerenciar
-              </button>
-            </div>
-          </div>
-        );
-      case 'produtos':
-        return <AdminProducts />;
-      case 'relatorios':
-        return <AdminReports />;
-      default:
-        return null;
+      const revenue = orderData?.reduce((sum, order) => sum + (order.total || 0), 0) || 0;
+
+      setSummary({ users: users || 0, products: products || 0, orders: orders || 0, revenue });
+    } catch (error) {
+      console.error('Erro ao buscar resumo:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="flex justify-center items-center h-64">
         <div className="text-lg text-gray-600">Carregando...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="max-w-7xl mx-auto py-10 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Painel do Administrador</h1>
-        <div className="flex border-b border-gray-200 mb-8">
+    <div className="p-6 max-w-7xl mx-auto">
+      <h1 className="text-3xl font-bold mb-8 text-gray-900">Painel Administrativo</h1>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Total Usuários</h3>
+          <p className="text-3xl font-bold text-indigo-600">{summary.users}</p>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Total Produtos</h3>
+          <p className="text-3xl font-bold text-green-600">{summary.products}</p>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Total Pedidos</h3>
+          <p className="text-3xl font-bold text-blue-600">{summary.orders}</p>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Receita Total</h3>
+          <p className="text-3xl font-bold text-purple-600">R$ {summary.revenue.toLocaleString('pt-BR')}</p>
+        </div>
+      </div>
+
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8">
           <button
-            className={`-mb-px p-4 font-medium ${activeTab === 'dashboard' ? 'border-b-2 border-indigo-500 text-indigo-600' : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
-            onClick={() => setActiveTab('dashboard')}
-          >
-            Dashboard
-          </button>
-          <button
-            className={`-mb-px p-4 font-medium ${activeTab === 'produtos' ? 'border-b-2 border-indigo-500 text-indigo-600' : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
-            onClick={() => setActiveTab('produtos')}
+            onClick={() => setActiveTab('products')}
+            className={`${
+              activeTab === 'products'
+                ? 'border-indigo-500 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm`}
           >
             Produtos
           </button>
           <button
-            className={`-mb-px p-4 font-medium ${activeTab === 'relatorios' ? 'border-b-2 border-indigo-500 text-indigo-600' : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
-            onClick={() => setActiveTab('relatorios')}
+            onClick={() => setActiveTab('reports')}
+            className={`${
+              activeTab === 'reports'
+                ? 'border-indigo-500 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm`}
           >
             Relatórios
           </button>
-        </div>
-        {renderTabContent()}
+        </nav>
+      </div>
+
+      <div className="mt-6">
+        {activeTab === 'products' && <AdminProducts />}
+        {activeTab === 'reports' && <AdminReports />}
       </div>
     </div>
   );
