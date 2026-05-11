@@ -1,57 +1,107 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 
 const StockDashboard = () => {
-  const [stocks, setStocks] = useState([
-    { id: 1, name: 'AAPL', quantity: 10, price: 150 },
-    { id: 2, name: 'GOOGL', quantity: 5, price: 2800 },
-    { id: 3, name: 'MSFT', quantity: 8, price: 300 }
-  ]);
+  const [stocks, setStocks] = useState([]);
+  const [filter, setFilter] = useState('');
 
-  const editQuantity = (index) => {
-    const item = stocks[index];
-    const newQuantity = prompt(`Digite a nova quantidade para ${item.name}:`, item.quantity.toString());
-    if (newQuantity !== null && newQuantity !== '') {
-      const parsedQuantity = parseInt(newQuantity);
-      if (!isNaN(parsedQuantity) && parsedQuantity >= 0) {
-        setStocks(prevStocks => {
-          const newStocks = [...prevStocks];
-          newStocks[index].quantity = parsedQuantity;
-          return newStocks;
-        });
+  useEffect(() => {
+    async function fetchStocks() {
+      const { data, error } = await supabase
+        .from('stock')
+        .select('*, products(name), sizes(name)');
+      if (error) {
+        console.error(error);
+      } else {
+        setStocks(data || []);
+      }
+    }
+    fetchStocks();
+  }, []);
+
+  const updateQuantity = async (stockId, newQuantity) => {
+    const { error } = await supabase
+      .from('stock')
+      .update({ quantity: newQuantity })
+      .eq('id', stockId)
+      .select();
+    if (error) {
+      console.error(error);
+      return false;
+    }
+    setStocks(prev =>
+      prev.map(stock => (stock.id === stockId ? { ...stock, quantity: newQuantity } : stock))
+    );
+    return true;
+  };
+
+  const increment = (stock) => {
+    updateQuantity(stock.id, stock.quantity + 1);
+  };
+
+  const decrement = (stock) => {
+    if (stock.quantity > 0) {
+      updateQuantity(stock.id, stock.quantity - 1);
+    }
+  };
+
+  const editQuantity = (stock) => {
+    const newQtyStr = prompt(`Nova quantidade para ${stock.products?.name} - ${stock.sizes?.name}:`, stock.quantity);
+    if (newQtyStr !== null) {
+      const newQty = parseInt(newQtyStr);
+      if (!isNaN(newQty) && newQty >= 0) {
+        updateQuantity(stock.id, newQty);
       }
     }
   };
 
-  const totalValue = stocks.reduce((sum, stock) => sum + (stock.quantity * stock.price), 0);
+  const filteredStocks = stocks.filter(stock =>
+    stock.products?.name?.toLowerCase().includes(filter.toLowerCase()) ?? false
+  );
 
   return (
-    <div className="stock-dashboard">
-      <h1>Dashboard de Ações</h1>
-      <table>
+    <div>
+      <input
+        type="text"
+        placeholder="Filtrar por produto"
+        value={filter}
+        onChange={(e) => setFilter(e.target.value)}
+        style={{ marginBottom: '10px', padding: '5px' }}
+      />
+      <table style={{ borderCollapse: 'collapse', width: '100%' }}>
         <thead>
           <tr>
-            <th>Nome</th>
-            <th>Quantidade</th>
-            <th>Preço</th>
-            <th>Total</th>
-            <th>Ações</th>
+            <th style={{ border: '1px solid #ddd', padding: '8px' }}>Produto</th>
+            <th style={{ border: '1px solid #ddd', padding: '8px' }}>Tamanho</th>
+            <th style={{ border: '1px solid #ddd', padding: '8px' }}>Quantidade</th>
+            <th style={{ border: '1px solid #ddd', padding: '8px' }}>Ações</th>
           </tr>
         </thead>
         <tbody>
-          {stocks.map((stock, index) => (
+          {filteredStocks.map((stock) => (
             <tr key={stock.id}>
-              <td>{stock.name}</td>
-              <td>{stock.quantity}</td>
-              <td>R$ {stock.price.toFixed(2)}</td>
-              <td>R$ {(stock.quantity * stock.price).toFixed(2)}</td>
-              <td>
-                <button onClick={() => editQuantity(index)}>Editar Quantidade</button>
+              <td style={{ border: '1px solid #ddd', padding: '8px' }}>{stock.products?.name}</td>
+              <td style={{ border: '1px solid #ddd', padding: '8px' }}>{stock.sizes?.name}</td>
+              <td
+                style={{
+                  border: '1px solid #ddd',
+                  padding: '8px',
+                  backgroundColor: stock.quantity < 5 ? '#ffcccc' : 'transparent',
+                  color: stock.quantity < 5 ? 'red' : 'black',
+                  fontWeight: stock.quantity < 5 ? 'bold' : 'normal'
+                }}
+              >
+                {stock.quantity}
+              </td>
+              <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                <button onClick={() => increment(stock)} style={{ marginRight: '5px' }}>+</button>
+                <button onClick={() => decrement(stock)} style={{ marginRight: '5px' }}>-</button>
+                <button onClick={() => editQuantity(stock)}>Editar</button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-      <h2>Valor Total do Portfólio: R$ {totalValue.toFixed(2)}</h2>
     </div>
   );
 };
