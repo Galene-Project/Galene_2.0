@@ -1,21 +1,76 @@
-import React from 'react';
+import { useState } from 'react';
+import AdminButton from './admin/AdminButton';
 
-const AdminButton = () => {
-  const handleClick = () => {
-    window.open('/admin', '_blank');
+function App() {
+  const [currentPage, setCurrentPage] = useState('home');
+
+  const renderPage = () => {
+    switch (currentPage) {
+      case 'home':
+        return (
+          <div className="p-8">
+            <h2 className="text-2xl font-bold mb-4">Página Inicial</h2>
+            <p>Conteúdo da página inicial.</p>
+          </div>
+        );
+      case 'about':
+        return (
+          <div className="p-8">
+            <h2 className="text-2xl font-bold mb-4">Sobre</h2>
+            <p>Conteúdo da página sobre.</p>
+          </div>
+        );
+      case 'contact':
+        return (
+          <div className="p-8">
+            <h2 className="text-2xl font-bold mb-4">Contato</h2>
+            <p>Conteúdo da página de contato.</p>
+          </div>
+        );
+      default:
+        return null;
+    }
   };
 
   return (
-    <button
-      onClick={handleClick}
-      className="fixed bottom-6 left-6 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 z-50 flex items-center justify-center w-12 h-12 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-    >
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-    </button>
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-white shadow-sm border-b fixed top-0 left-0 right-0 z-40">
+        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex-shrink-0">
+              <h1 className="text-xl font-bold text-gray-900">App</h1>
+            </div>
+            <div className="flex space-x-4">
+              <button
+                onClick={() => setCurrentPage('home')}
+                className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              >
+                Início
+              </button>
+              <button
+                onClick={() => setCurrentPage('about')}
+                className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              >
+                Sobre
+              </button>
+              <button
+                onClick={() => setCurrentPage('contact')}
+                className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              >
+                Contato
+              </button>
+            </div>
+          </div>
+        </nav>
+      </header>
+      <main className="pt-16 pb-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          {renderPage()}
+        </div>
+      </main>
+      <AdminButton className="fixed bottom-[24px] left-[80px] z-[500]" />
+    </div>
   );
-};
+}
 
-export default AdminButton;
+export default App;
