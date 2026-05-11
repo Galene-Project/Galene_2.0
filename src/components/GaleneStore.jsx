@@ -211,7 +211,7 @@ export default function GaleneStore() {
         </nav>
       )}
       
-      <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 500 }}>
+      <div style={{ position: "fixed", bottom: 24, left: 24, zIndex: 500 }}>
         <AdminAccessSimplified />
       </div>
     </div>
