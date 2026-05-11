@@ -1,3 +1,4 @@
+import '../styles/GaleneStore.css';
 import React, { useState, useEffect } from 'react';
 import AdminAccessSimplified from './AdminAccessSimplified';
 
